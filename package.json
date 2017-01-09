@@ -1,0 +1,84 @@
+{
+    "author": "Steven Olmsted <steven.olmsted@ibigroup.com>",
+    "babel": {
+        "env": {
+            "build": {
+                "presets": [
+                    "babili"
+                ]
+            }
+        },
+        "plugins": [
+            "transform-line",
+            "transform-runtime"
+        ],
+        "presets": [
+            "latest"
+        ],
+        "sourceMaps": "inline"
+    },
+    "bugs": "https://github.com/ibi-group/isotropic-initializable/issues",
+    "contributors": [
+        "Duane Sibilly <duane.sibilly@ibigroup.com>"
+    ],
+    "dependencies": {
+        "babel-runtime": "~6.20.0",
+        "isotropic-asap": "~0.4.0",
+        "isotropic-make": "~0.4.0",
+        "isotropic-mixin-prototype-chain": "~0.1.0",
+        "isotropic-pubsub": "~0.5.0"
+    },
+    "description": "An observable initialization lifecycle.",
+    "devDependencies": {
+        "babel-cli": "~6.18.0",
+        "babel-istanbul": "~0.12.1",
+        "babel-plugin-transform-line": "~0.2.0",
+        "babel-plugin-transform-runtime": "~6.15.0",
+        "babel-preset-babili": "~0.0.9",
+        "babel-preset-latest": "~6.16.0",
+        "chai": "~3.5.0",
+        "eslint": "~3.13.0",
+        "eslint-config-isotropic": "~0.4.0",
+        "mocha": "~3.2.0",
+        "nsp": "~2.6.2"
+    },
+    "engines": {
+        "node": "^6.9.4",
+        "npm": "^4.1.1"
+    },
+    "eslintConfig": {
+        "env": {
+            "browser": true,
+            "es6": true,
+            "node": true
+        },
+        "extends": "isotropic",
+        "parserOptions": {
+            "ecmaFeatures": {
+                "experimentalObjectRestSpread": true,
+                "globalReturn": false,
+                "impliedStrict": true,
+                "jsx": false
+            },
+            "ecmaVersion": 2017,
+            "sourceType": "module"
+        },
+        "root": true
+    },
+    "homepage": "https://github.com/ibi-group/isotropic-initializable",
+    "license": "BSD-3-Clause",
+    "main": "lib/initializable.js",
+    "name": "isotropic-initializable",
+    "repository": "ibi-group/isotropic-initializable",
+    "scripts": {
+        "build": "BABEL_ENV=build babel js -d lib",
+        "lint": "eslint js test",
+        "posttest": "[ -z \"$npm_config_coverage\" ] || babel-istanbul check-coverage --branches 100 --functions 100 --lines 100 --statements 100",
+        "prepare": "npm run build",
+        "prepublishOnly": "npm run securityCheck && npm test --coverage",
+        "pretest": "npm run lint",
+        "securityCheck": "nsp check",
+        "test": "babel-node ./node_modules/.bin/babel-istanbul test _mocha"
+    },
+    "version": "0.0.0"
+}
