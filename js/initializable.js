@@ -1,16 +1,8 @@
-import _Pubsub, {
-    Dispatcher as _Dispatcher
-} from 'isotropic-pubsub';
-
-import _asap from 'isotropic-asap';
-
+import * as _mixinPrototypeChain from 'isotropic-mixin-prototype-chain';
+import _Pubsub, * as _pubsub from 'isotropic-pubsub';
 import _Error from 'isotropic-error';
-
+import _later from 'isotropic-later';
 import _make from 'isotropic-make';
-
-import {
-    mixinPrototypeChainFromInstanceObject as _mixinPrototypeChainFromInstanceObject
-} from 'isotropic-mixin-prototype-chain';
 
 const _Initializable = _make([
     _Pubsub
@@ -72,7 +64,7 @@ const _Initializable = _make([
             error
         }
     }) {
-        _asap(() => {
+        _later.asap(() => {
             throw _Error({
                 error
             });
@@ -96,7 +88,7 @@ const _Initializable = _make([
             initializationObjects = [],
             initializeMethods = new Set();
 
-        for (const object of _mixinPrototypeChainFromInstanceObject(this)) {
+        for (const object of _mixinPrototypeChain.mixinPrototypeChainFromInstanceObject(this)) {
             if (Reflect.apply(Object.prototype.hasOwnProperty, object, [
                 '_doNotInitialize'
             ])) {
@@ -139,18 +131,18 @@ const _Initializable = _make([
             allowPublicPublish: false,
             completeOnce: true,
             defaultFunction: '_eventInitialize',
-            Dispatcher: _Dispatcher
+            Dispatcher: _pubsub.Dispatcher
         },
         initializeComplete: {
             allowPublicPublish: false,
             defaultFunction: '_eventInitializeComplete',
-            Dispatcher: _Dispatcher,
+            Dispatcher: _pubsub.Dispatcher,
             publishOnce: true
         },
         initializeError: {
             allowPublicPublish: false,
             defaultFunction: '_eventInitializeError',
-            Dispatcher: _Dispatcher,
+            Dispatcher: _pubsub.Dispatcher,
             publishOnce: true
         }
     }
