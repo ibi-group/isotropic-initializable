@@ -190,6 +190,67 @@ _mocha.describe('_Initializable', function () {
         ]);
     });
 
+    _mocha.it('should initialize mixins in definition order', () => {
+        let e;
+
+        const initializeExecuted = [],
+
+            A = _make({
+                _initialize () {
+                    _chai.expect(this).to.equal(e);
+                    initializeExecuted.push('A');
+                }
+            }),
+            B = _make({
+                _initialize () {
+                    _chai.expect(this).to.equal(e);
+                    initializeExecuted.push('B');
+                }
+            }),
+            C = _make({
+                _initialize () {
+                    _chai.expect(this).to.equal(e);
+                    initializeExecuted.push('C');
+                }
+            }),
+            D = _make({
+                _initialize () {
+                    _chai.expect(this).to.equal(e);
+                    initializeExecuted.push('D');
+                }
+            }),
+            E = _make(_Initializable, [
+                A,
+                B,
+                C,
+                D
+            ], {
+                _initialize () {
+                    _chai.expect(this).to.equal(e);
+                    initializeExecuted.push('E');
+                }
+            });
+
+        e = E({
+            initialize: false
+        });
+
+        e._initialize = () => {
+            initializeExecuted.push('e');
+        };
+
+        e.initialize();
+
+        _chai.expect(initializeExecuted).to.deep.equal([
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
+            'e'
+        ]);
+    });
+
     _mocha.it('should not call inherited _initialize methods on _doNotInitialize objects', () => {
         const initializeExecuted = [],
 
