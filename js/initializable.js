@@ -114,7 +114,7 @@ const _Initializable = _make([
             initialize = true
         } = {}] = args;
 
-        _Pubsub.prototype._init.apply(this, args);
+        Reflect.apply(_Pubsub.prototype._init, this, args);
 
         this._initialized = false;
 
