@@ -53,7 +53,7 @@
         "eslint": "~5.16.0",
         "eslint-plugin-isotropic": "~0.4.2",
         "mocha": "~6.1.4",
-        "nyc": "~14.1.0"
+        "nyc": "~14.1.1"
     },
     "engines": {
         "node": "^10.15.3",
@@ -81,6 +81,9 @@
         "root": true
     },
     "homepage": "https://github.com/ibi-group/isotropic-initializable",
+    "keywords": [
+        "isotropic"
+    ],
     "license": "BSD-3-Clause",
     "main": "lib/initializable.js",
     "name": "isotropic-initializable",
