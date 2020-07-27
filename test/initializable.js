@@ -1,7 +1,8 @@
 import _chai from 'chai';
-import _domain from 'domain';
+import _domain from 'domain'; // eslint-disable-line isotropic/node/no-deprecated-api -- TODO: Find a way to implement this test without a domain.
 import _Error from 'isotropic-error';
 import _Initializable from '../js/initializable.js';
+import _later from 'isotropic-later';
 import _make from 'isotropic-make';
 import _mocha from 'mocha';
 
@@ -452,7 +453,7 @@ _mocha.describe('_Initializable', function () {
             A = _make({
                 async _initialize () {
                     await new Promise(resolve => {
-                        setTimeout(resolve, 34);
+                        _later(34, resolve);
                     });
 
                     initializeExecuted.push('A');
@@ -461,7 +462,7 @@ _mocha.describe('_Initializable', function () {
             B = _make({
                 async _initialize () {
                     await new Promise(resolve => {
-                        setTimeout(resolve, 21);
+                        _later(21, resolve);
                     });
 
                     initializeExecuted.push('B');
@@ -470,7 +471,7 @@ _mocha.describe('_Initializable', function () {
             C = _make({
                 async _initialize () {
                     await new Promise(resolve => {
-                        setTimeout(resolve, 13);
+                        _later(13, resolve);
                     });
 
                     initializeExecuted.push('C');
@@ -505,7 +506,7 @@ _mocha.describe('_Initializable', function () {
             initializeExecuted.push('z');
 
             await new Promise(resolve => {
-                setTimeout(resolve, 2);
+                _later(2, resolve);
             });
         };
 
@@ -558,11 +559,11 @@ _mocha.describe('_Initializable', function () {
             domain.exit();
         });
 
-        setTimeout(() => {
+        _later(55, () => {
             _chai.expect(subscriptionExecuted).to.be.true;
             _chai.expect(capturedError).to.have.property('name', 'CustomInitializationError');
             callbackFunction();
-        }, 55);
+        });
     });
 
     _mocha.it('should work with mixins', () => {
