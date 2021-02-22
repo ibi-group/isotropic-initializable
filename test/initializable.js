@@ -1,10 +1,10 @@
-import _chai from 'chai';
+import _chai from 'isotropic-dev-dependencies/lib/chai.js';
 import _domain from 'domain'; // eslint-disable-line isotropic/node/no-deprecated-api -- TODO: Find a way to implement this test without a domain.
 import _Error from 'isotropic-error';
 import _Initializable from '../js/initializable.js';
 import _later from 'isotropic-later';
 import _make from 'isotropic-make';
-import _mocha from 'mocha';
+import _mocha from 'isotropic-dev-dependencies/lib/mocha.js';
 
 _mocha.describe('_Initializable', function () {
     this.timeout(377);
