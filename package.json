@@ -5,15 +5,15 @@
         "Duane Sibilly <duane.sibilly@ibigroup.com>"
     ],
     "dependencies": {
-        "isotropic-error": "~0.11.0",
-        "isotropic-later": "~0.11.0",
-        "isotropic-make": "~0.11.0",
-        "isotropic-mixin-prototype-chain": "~0.8.0",
-        "isotropic-pubsub": "~0.12.0"
+        "isotropic-error": "~0.12.0",
+        "isotropic-later": "~0.12.0",
+        "isotropic-make": "~0.12.0",
+        "isotropic-mixin-prototype-chain": "~0.9.0",
+        "isotropic-pubsub": "~0.13.0"
     },
     "description": "An observable initialization lifecycle",
     "devDependencies": {
-        "isotropic-dev-dependencies": "0.0.0"
+        "isotropic-dev-dependencies": "~0.1.0"
     },
     "engines": {
         "node": "^14.15.5",
@@ -41,5 +41,5 @@
         "pretest": "npm run lint",
         "test": "cross-env BABEL_ENV=test nyc --nycrc-path ./node_modules/isotropic-dev-dependencies/config/nyc.json mocha"
     },
-    "version": "0.8.0"
+    "version": "0.9.0"
 }
