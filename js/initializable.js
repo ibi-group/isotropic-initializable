@@ -93,7 +93,9 @@ const _Initializable = _make([
                 '_doNotInitialize'
             ])) {
                 if (Array.isArray(object._doNotInitialize) || object._doNotInitialize instanceof Set) {
-                    object._doNotInitialize.forEach(object => doNotInitialize.add(object.prototype || object));
+                    object._doNotInitialize.forEach(object => {
+                        doNotInitialize.add(object.prototype || object);
+                    });
                 } else {
                     doNotInitialize.add(object._doNotInitialize.prototype || object._doNotInitialize);
                 }
