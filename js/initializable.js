@@ -124,7 +124,7 @@ const _Initializable = _make([
         // empty method
     }
 }, {
-    _events: {
+    _pubsub: {
         initialize: {
             allowPublicPublish: false,
             completeOnce: true,
