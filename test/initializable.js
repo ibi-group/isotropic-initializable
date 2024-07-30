@@ -1,5 +1,5 @@
 import _chai from 'isotropic-dev-dependencies/lib/chai.js';
-import _domain from 'domain'; // eslint-disable-line isotropic/node/no-deprecated-api -- TODO: Find a way to implement this test without a domain.
+import _domain from 'node:domain'; // eslint-disable-line isotropic/node/no-deprecated-api -- TODO: Find a way to implement this test without a domain.
 import _Error from 'isotropic-error';
 import _Initializable from '../js/initializable.js';
 import _later from 'isotropic-later';

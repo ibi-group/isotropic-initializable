@@ -89,19 +89,17 @@ const _Initializable = _make([
             initializeMethods = new Set();
 
         for (const object of _mixinPrototypeChain.mixinPrototypeChainFromInstanceObject(this)) {
-            if (Reflect.apply(Object.prototype.hasOwnProperty, object, [
-                '_doNotInitialize'
-            ])) {
+            if (Object.hasOwn(object, '_doNotInitialize')) {
                 if (Array.isArray(object._doNotInitialize) || object._doNotInitialize instanceof Set) {
-                    object._doNotInitialize.forEach(object => doNotInitialize.add(object.prototype || object));
+                    object._doNotInitialize.forEach(object => {
+                        doNotInitialize.add(object.prototype || object);
+                    });
                 } else {
                     doNotInitialize.add(object._doNotInitialize.prototype || object._doNotInitialize);
                 }
             }
 
-            if (Reflect.apply(Object.prototype.hasOwnProperty, object, [
-                '_initialize'
-            ]) && !doNotInitialize.has(object) && !initializeMethods.has(object._initialize)) {
+            if (Object.hasOwn(object, '_initialize') && !doNotInitialize.has(object) && !initializeMethods.has(object._initialize)) {
                 initializationObjects.unshift(object);
                 initializeMethods.add(object._initialize);
             }
@@ -126,7 +124,7 @@ const _Initializable = _make([
         // empty method
     }
 }, {
-    _events: {
+    _pubsub: {
         initialize: {
             allowPublicPublish: false,
             completeOnce: true,
