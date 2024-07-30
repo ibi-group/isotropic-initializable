@@ -2,15 +2,15 @@
     "author": "Steven Olmsted <steven.olmsted@ibigroup.com>",
     "bugs": "https://github.com/ibi-group/isotropic-initializable/issues",
     "dependencies": {
-        "isotropic-error": "~0.12.0",
-        "isotropic-later": "~0.12.0",
-        "isotropic-make": "~0.12.0",
-        "isotropic-mixin-prototype-chain": "~0.9.0",
-        "isotropic-pubsub": "~0.13.0"
+        "isotropic-error": "~0.13.0",
+        "isotropic-later": "~0.13.0",
+        "isotropic-make": "~0.13.0",
+        "isotropic-mixin-prototype-chain": "~0.10.0",
+        "isotropic-pubsub": "~0.14.0"
     },
     "description": "An observable initialization lifecycle",
     "devDependencies": {
-        "isotropic-dev-dependencies": "~0.1.0"
+        "isotropic-dev-dependencies": "~0.3.0"
     },
     "engines": {
         "node": "^22.5.1",
@@ -38,5 +38,5 @@
         "test": "cross-env BABEL_ENV=test c8 -c ./node_modules/isotropic-dev-dependencies/config/c8.json mocha --import=isotropic-dev-dependencies/lib/register-babel-loader.js"
     },
     "type": "module",
-    "version": "0.9.0"
+    "version": "0.10.0"
 }
