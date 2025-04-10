@@ -127,17 +127,17 @@ export default _make([
 }, {
     _pubsub: {
         initialize: {
+            completeFunction: '_eventInitialize',
             completeOnce: true,
-            defaultFunction: '_eventInitialize',
             Dispatcher: _Dispatcher
         },
         initializeComplete: {
-            defaultFunction: '_eventInitializeComplete',
+            completeFunction: '_eventInitializeComplete',
             Dispatcher: _Dispatcher,
             publishOnce: true
         },
         initializeError: {
-            defaultFunction: '_eventInitializeError',
+            completeFunction: '_eventInitializeError',
             Dispatcher: _Dispatcher,
             publishOnce: true
         }
