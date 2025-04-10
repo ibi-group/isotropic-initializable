@@ -10,6 +10,7 @@
     },
     "description": "An observable initialization lifecycle",
     "devDependencies": {
+        "eslint": "~9.8.0",
         "isotropic-dev-dependencies": "~0.3.0"
     },
     "engines": {
