@@ -1,10 +1,10 @@
 import _chai from 'isotropic-dev-dependencies/lib/chai.js';
-import _domain from 'node:domain'; // eslint-disable-line isotropic/node/no-deprecated-api -- TODO: Find a way to implement this test without a domain.
 import _Error from 'isotropic-error';
 import _Initializable from '../js/initializable.js';
 import _later from 'isotropic-later';
 import _make from 'isotropic-make';
 import _mocha from 'isotropic-dev-dependencies/lib/mocha.js';
+import _process from 'node:process';
 
 _mocha.describe('_Initializable', function () {
     this.timeout(377);
@@ -528,9 +528,6 @@ _mocha.describe('_Initializable', function () {
     });
 
     _mocha.it('should handle initialization errors', callbackFunction => {
-        let capturedError,
-            subscriptionExecuted = false;
-
         const CustomInitializable = _make(_Initializable, {
                 _initialize () {
                     throw _Error({
@@ -538,8 +535,7 @@ _mocha.describe('_Initializable', function () {
                     });
                 }
             }),
-            customInitializable = CustomInitializable(),
-            domain = _domain.create();
+            customInitializable = CustomInitializable();
 
         _chai.expect(customInitializable).to.have.property('initialized', false);
 
@@ -550,19 +546,22 @@ _mocha.describe('_Initializable', function () {
         }) => {
             _chai.expect(error).to.be.an.instanceOf(_Error);
             _chai.expect(error).to.have.property('name', 'CustomInitializationError');
-            subscriptionExecuted = true;
-            domain.enter();
-        });
 
-        domain.on('error', error => {
-            capturedError = error;
-            domain.exit();
-        });
+            const emit = _process.emit;
 
-        _later(55, () => {
-            _chai.expect(subscriptionExecuted).to.be.true;
-            _chai.expect(capturedError).to.have.property('name', 'CustomInitializationError');
-            callbackFunction();
+            _process.emit = (...args) => {
+                if (args[0] === 'uncaughtException' && args[1]?.error === error) {
+                    _process.emit = emit;
+
+                    _later.asap(() => {
+                        callbackFunction();
+                    });
+
+                    return true;
+                }
+
+                return Reflect.apply(emit, _process, args);
+            };
         });
     });
 
