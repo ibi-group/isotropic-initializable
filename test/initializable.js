@@ -1,21 +1,21 @@
 import _chai from 'isotropic-dev-dependencies/lib/chai.js';
 import _Error from 'isotropic-error';
-import _Initializable from '../js/initializable.js';
+import _Initializable from '../lib/initializable.js';
 import _later from 'isotropic-later';
 import _make from 'isotropic-make';
-import _mocha from 'isotropic-dev-dependencies/lib/mocha.js';
 import _process from 'node:process';
+import _test from 'node:test';
 
-_mocha.describe('_Initializable', function () {
-    this.timeout(377);
-
-    _mocha.it('should construct initializable objects', () => {
+_test.describe('_Initializable', () => {
+    _test.it('should construct initializable objects', () => {
         _chai.expect(_Initializable).to.be.a('function');
+        _chai.expect(_Initializable).to.have.property('name').that.equals('Initializable');
 
         const initializable = new _Initializable();
 
+        _chai.expect(initializable).to.be.an('Initializable');
         _chai.expect(initializable).to.be.an.instanceOf(_Initializable);
-
+        _chai.expect(initializable).to.have.property('initialize').that.is.a('function');
         _chai.expect(initializable).to.have.property('initialized', true);
 
         initializable.destroy();
@@ -23,13 +23,11 @@ _mocha.describe('_Initializable', function () {
         _chai.expect(initializable.initialized).to.be.undefined;
     });
 
-    _mocha.it('should be an initializable object factory', () => {
-        _chai.expect(_Initializable).to.be.a('function');
-
+    _test.it('should be an initializable object factory', () => {
         const initializable = _Initializable();
 
         _chai.expect(initializable).to.be.an.instanceOf(_Initializable);
-
+        _chai.expect(initializable).to.have.property('initialize').that.is.a('function');
         _chai.expect(initializable).to.have.property('initialized', true);
 
         initializable.destroy();
@@ -37,7 +35,7 @@ _mocha.describe('_Initializable', function () {
         _chai.expect(initializable.initialized).to.be.undefined;
     });
 
-    _mocha.it('should pass initialization arguments', () => {
+    _test.it('should pass initialization arguments', () => {
         let initializeExecuted = false;
 
         const CustomInitializable = _make(_Initializable, {
@@ -51,12 +49,14 @@ _mocha.describe('_Initializable', function () {
             }
         });
 
+        _chai.expect(CustomInitializable).to.be.a('function');
+
         CustomInitializable('a', 'b', 'c');
 
         _chai.expect(initializeExecuted).to.be.true;
     });
 
-    _mocha.it('should allow construction without initialization', () => {
+    _test.it('should allow construction without initialization', () => {
         const initializable = _Initializable({
             initialize: false
         });
@@ -68,7 +68,7 @@ _mocha.describe('_Initializable', function () {
         _chai.expect(initializable.initialized).to.be.undefined;
     });
 
-    _mocha.it('should allow observation of initialization', () => {
+    _test.it('should allow observation of initialization', () => {
         const initializable = _Initializable({
                 initialize: false
             }),
@@ -122,7 +122,7 @@ _mocha.describe('_Initializable', function () {
         ]);
     });
 
-    _mocha.it('should call every inherited _initialize method', () => {
+    _test.it('should call every inherited _initialize method', () => {
         let z;
 
         const initializeExecuted = [],
@@ -170,6 +170,13 @@ _mocha.describe('_Initializable', function () {
                 }
             });
 
+        _chai.expect(A).to.be.a('function');
+        _chai.expect(B).to.be.a('function');
+        _chai.expect(C).to.be.a('function');
+        _chai.expect(X).to.be.a('function');
+        _chai.expect(Y).to.be.a('function');
+        _chai.expect(Z).to.be.a('function');
+
         z = Z({
             initialize: false
         });
@@ -191,7 +198,7 @@ _mocha.describe('_Initializable', function () {
         ]);
     });
 
-    _mocha.it('should initialize mixins in definition order', () => {
+    _test.it('should initialize mixins in definition order', () => {
         let e;
 
         const initializeExecuted = [],
@@ -232,6 +239,12 @@ _mocha.describe('_Initializable', function () {
                 }
             });
 
+        _chai.expect(A).to.be.a('function');
+        _chai.expect(B).to.be.a('function');
+        _chai.expect(C).to.be.a('function');
+        _chai.expect(D).to.be.a('function');
+        _chai.expect(E).to.be.a('function');
+
         e = E({
             initialize: false
         });
@@ -252,7 +265,7 @@ _mocha.describe('_Initializable', function () {
         ]);
     });
 
-    _mocha.it('should not call inherited _initialize methods on _doNotInitialize objects', () => {
+    _test.it('should not call inherited _initialize methods on _doNotInitialize objects', () => {
         const initializeExecuted = [],
 
             A = _make({
@@ -297,6 +310,13 @@ _mocha.describe('_Initializable', function () {
                 initialize: false
             });
 
+        _chai.expect(A).to.be.a('function');
+        _chai.expect(B).to.be.a('function');
+        _chai.expect(C).to.be.a('function');
+        _chai.expect(X).to.be.a('function');
+        _chai.expect(Y).to.be.a('function');
+        _chai.expect(Z).to.be.a('function');
+
         z._doNotInitialize = z;
 
         z._initialize = () => {
@@ -313,7 +333,7 @@ _mocha.describe('_Initializable', function () {
         ]);
     });
 
-    _mocha.it('should not call inherited _initialize methods on objects in a _doNotInitialize array', () => {
+    _test.it('should not call inherited _initialize methods on objects in a _doNotInitialize array', () => {
         const initializeExecuted = [],
 
             A = _make({
@@ -362,6 +382,13 @@ _mocha.describe('_Initializable', function () {
             z = Z({
                 initialize: false
             });
+
+        _chai.expect(A).to.be.a('function');
+        _chai.expect(B).to.be.a('function');
+        _chai.expect(C).to.be.a('function');
+        _chai.expect(X).to.be.a('function');
+        _chai.expect(Y).to.be.a('function');
+        _chai.expect(Z).to.be.a('function');
 
         z._doNotInitialize = [
             z
@@ -380,7 +407,7 @@ _mocha.describe('_Initializable', function () {
         ]);
     });
 
-    _mocha.it('should not call inherited _initialize methods on objects in a _doNotInitialize set', () => {
+    _test.it('should not call inherited _initialize methods on objects in a _doNotInitialize set', () => {
         const initializeExecuted = [],
 
             A = _make({
@@ -430,6 +457,13 @@ _mocha.describe('_Initializable', function () {
                 initialize: false
             });
 
+        _chai.expect(A).to.be.a('function');
+        _chai.expect(B).to.be.a('function');
+        _chai.expect(C).to.be.a('function');
+        _chai.expect(X).to.be.a('function');
+        _chai.expect(Y).to.be.a('function');
+        _chai.expect(Z).to.be.a('function');
+
         z._doNotInitialize = new Set([
             z
         ]);
@@ -447,7 +481,9 @@ _mocha.describe('_Initializable', function () {
         ]);
     });
 
-    _mocha.it('should await async inherited _initialize methods', callbackFunction => {
+    _test.it('should await async inherited _initialize methods', {
+        timeout: 377
+    }, (test, callbackFunction) => {
         const initializeExecuted = [],
 
             A = _make({
@@ -502,6 +538,13 @@ _mocha.describe('_Initializable', function () {
                 initialize: false
             });
 
+        _chai.expect(A).to.be.a('function');
+        _chai.expect(B).to.be.a('function');
+        _chai.expect(C).to.be.a('function');
+        _chai.expect(X).to.be.a('function');
+        _chai.expect(Y).to.be.a('function');
+        _chai.expect(Z).to.be.a('function');
+
         z._initialize = async () => {
             initializeExecuted.push('z');
 
@@ -527,7 +570,9 @@ _mocha.describe('_Initializable', function () {
         z.initialize();
     });
 
-    _mocha.it('should handle initialization errors', callbackFunction => {
+    _test.it('should handle initialization errors', {
+        timeout: 377
+    }, (test, callbackFunction) => {
         const CustomInitializable = _make(_Initializable, {
                 _initialize () {
                     throw _Error({
@@ -536,6 +581,8 @@ _mocha.describe('_Initializable', function () {
                 }
             }),
             customInitializable = CustomInitializable();
+
+        _chai.expect(CustomInitializable).to.be.a('function');
 
         _chai.expect(customInitializable).to.have.property('initialized', false);
 
@@ -565,7 +612,7 @@ _mocha.describe('_Initializable', function () {
         });
     });
 
-    _mocha.it('should work with mixins', () => {
+    _test.it('should work with mixins', () => {
         const methodsExecuted = [],
 
             A = _make([
@@ -597,6 +644,10 @@ _mocha.describe('_Initializable', function () {
             }),
             c = C();
 
+        _chai.expect(A).to.be.a('function');
+        _chai.expect(B).to.be.a('function');
+        _chai.expect(C).to.be.a('function');
+
         _chai.expect(c).not.to.be.an.instanceOf(_Initializable);
 
         _chai.expect(c).to.have.property('initialized', true);
@@ -609,5 +660,148 @@ _mocha.describe('_Initializable', function () {
         c.destroy();
 
         _chai.expect(c.initialized).to.be.undefined;
+    });
+
+    _test.it('should handle rejected asynchronous _initialize methods', {
+        timeout: 377
+    }, (test, callbackFunction) => {
+        const CustomInitializable = _make(_Initializable, {
+                _initialize () {
+                    return Promise.reject(_Error({
+                        name: 'AsyncInitializationError'
+                    }));
+                }
+            }),
+            customInitializable = CustomInitializable();
+
+        _chai.expect(CustomInitializable).to.be.a('function');
+
+        _chai.expect(customInitializable).to.have.property('initialized', false);
+
+        customInitializable.on('initializeError', ({
+            data: {
+                error
+            }
+        }) => {
+            _chai.expect(error).to.be.an.instanceOf(_Error);
+            _chai.expect(error).to.have.property('name', 'AsyncInitializationError');
+
+            const emit = _process.emit;
+
+            _process.emit = (...args) => {
+                if (args[0] === 'uncaughtException' && args[1]?.error === error) {
+                    _process.emit = emit;
+
+                    _later.asap(() => {
+                        callbackFunction();
+                    });
+
+                    return true;
+                }
+
+                return Reflect.apply(emit, _process, args);
+            };
+        });
+    });
+
+    _test.it('should allow _initializeError to be overridden to handle errors', {
+        timeout: 377
+    }, (test, callbackFunction) => {
+        const CustomInitializable = _make(_Initializable, {
+            _initialize () {
+                throw _Error({
+                    name: 'CustomInitializationError'
+                });
+            },
+            _initializeError (error) {
+                _chai.expect(error).to.be.an.instanceOf(_Error);
+                _chai.expect(error).to.have.property('name', 'CustomInitializationError');
+
+                callbackFunction();
+            }
+        });
+
+        _chai.expect(CustomInitializable).to.be.a('function');
+        _chai.expect(CustomInitializable()).to.have.property('initialized', false);
+    });
+
+    _test.it('should initialize only once', () => {
+        let initializeCount = 0;
+
+        const CustomInitializable = _make(_Initializable, {
+                _initialize () {
+                    initializeCount += 1;
+                }
+            }),
+            customInitializable = CustomInitializable();
+
+        _chai.expect(CustomInitializable).to.be.a('function');
+
+        _chai.expect(customInitializable).to.have.property('initialized', true);
+        _chai.expect(initializeCount).to.equal(1);
+
+        customInitializable.initialize();
+        customInitializable.initialize();
+
+        _chai.expect(customInitializable).to.have.property('initialized', true);
+        _chai.expect(initializeCount).to.equal(1);
+
+        customInitializable.destroy();
+    });
+
+    _test.it('should not crash when destroyed during asynchronous initialization', {
+        timeout: 377
+    }, (test, callbackFunction) => {
+        const CustomInitializable = _make(_Initializable, {
+                _initialize () {
+                    return new Promise(resolve => {
+                        _later(2, resolve);
+                    });
+                }
+            }),
+            customInitializable = CustomInitializable();
+
+        _chai.expect(CustomInitializable).to.be.a('function');
+
+        _chai.expect(customInitializable).to.have.property('initialized', false);
+
+        customInitializable.destroy();
+
+        _chai.expect(customInitializable.initialized).to.be.undefined;
+
+        _later(10, () => {
+            _chai.expect(customInitializable.initialized).to.be.undefined;
+
+            callbackFunction();
+        });
+    });
+
+    _test.it('should not crash when destroyed during asynchronous initialization that fails', {
+        timeout: 377
+    }, (test, callbackFunction) => {
+        const CustomInitializable = _make(_Initializable, {
+                _initialize () {
+                    return new Promise((resolve, reject) => {
+                        _later(2, () => {
+                            reject(_Error({
+                                name: 'AsyncInitializationError'
+                            }));
+                        });
+                    });
+                }
+            }),
+            customInitializable = CustomInitializable();
+
+        _chai.expect(CustomInitializable).to.be.a('function');
+
+        _chai.expect(customInitializable).to.have.property('initialized', false);
+
+        customInitializable.destroy();
+
+        _later(10, () => {
+            _chai.expect(customInitializable.initialized).to.be.undefined;
+
+            callbackFunction();
+        });
     });
 });
