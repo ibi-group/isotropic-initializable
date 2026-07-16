@@ -35,7 +35,7 @@ import _Initializable from 'isotropic-initializable';
 import _make from 'isotropic-make';
 
 // Create a base component with initialization
-const _BaseComponent = _make(_Initializable, {
+const _BaseComponent = _make('BaseComponent', _Initializable, {
         _initialize () {
             console.log('Base component initializing...');
 
@@ -45,7 +45,7 @@ const _BaseComponent = _make(_Initializable, {
         }
     }),
     // Create a derived component
-    _EnhancedComponent = _make(_BaseComponent, {
+    _EnhancedComponent = _make('EnhancedComponent', _BaseComponent, {
         _initialize () {
             console.log('Enhanced component initializing...');
 
@@ -122,7 +122,7 @@ console.log(component.initialized); // true if initialization completed
 import _Initializable from 'isotropic-initializable';
 import _make from 'isotropic-make';
 
-const _Widget = _make(_Initializable, {
+const _Widget = _make('Widget', _Initializable, {
     render () {
         document.body.appendChild(this.elements.container);
     },
@@ -156,7 +156,7 @@ const _Widget = _make(_Initializable, {
 import _Initializable from 'isotropic-initializable';
 import _make from 'isotropic-make';
 
-const _DataComponent = _make(_Initializable, {
+const _DataComponent = _make('DataComponent', _Initializable, {
     displayData () {
         console.log('Displaying:', this.data);
     },
@@ -189,7 +189,7 @@ const _DataComponent = _make(_Initializable, {
 import _Initializable from 'isotropic-initializable';
 import _make from 'isotropic-make';
 
-const _LazyComponent = _make(_Initializable, {
+const _LazyComponent = _make('LazyComponent', _Initializable, {
     _initialize() {
         console.log('Initializing expensive resources...');
 
@@ -224,7 +224,7 @@ import _Initializable from 'isotropic-initializable';
 import _make from 'isotropic-make';
 
 // Base component
-const _UiComponent = _make(_Initializable, {
+const _UiComponent = _make('UiComponent', _Initializable, {
         _initialize (config) {
             console.log('UiComponent initializing');
 
@@ -234,7 +234,7 @@ const _UiComponent = _make(_Initializable, {
         }
     }),
     // Mid-level component
-    _Container = _make(_UiComponent, {
+    _Container = _make('Container', _UiComponent, {
         _initialize (config) {
             console.log('Container initializing');
 
@@ -247,7 +247,7 @@ const _UiComponent = _make(_Initializable, {
         }
     }),
     // Leaf component
-    _Panel = _make(_Container, {
+    _Panel = _make('Panel', _Container, {
         addContent (content) {
             this.content.appendChild(content);
 
@@ -278,7 +278,7 @@ const _UiComponent = _make(_Initializable, {
         styles: {
             height: '300px',
             width: '500px'
-        }
+        },
         title: 'System Status'
     });
 
@@ -293,7 +293,7 @@ import _Initializable from 'isotropic-initializable';
 import _make from 'isotropic-make';
 
 // Create mixins
-const _Resizable = _make({
+const _Resizable = _make('Resizable', {
         resize (width, height) {
             this.width = width ?? this.width;
             this.height = height ?? this.height;
@@ -313,7 +313,7 @@ const _Resizable = _make({
             this.updateSize();
         }
     }),
-    _Themeable = _make({
+    _Themeable = _make('Themeable', {
         applyTheme (theme) {
             console.log(`Applying theme: ${theme}`);
 
@@ -324,7 +324,7 @@ const _Resizable = _make({
                 'dark' :
                 'light';
             this.applyTheme(this.theme);
-        }
+        },
         _initialize (config) {
             console.log('Initializing theme support');
 
@@ -334,7 +334,7 @@ const _Resizable = _make({
     }),
 
     // Create a component with mixins
-    _MyComponent = _make(_Initializable, [
+    _MyComponent = _make('MyComponent', _Initializable, [
         _Resizable,
         _Themeable
     ], {
@@ -369,7 +369,7 @@ import _Error from 'isotropic-error';
 import _Initializable from 'isotropic-initializable';
 import _make from 'isotropic-make';
 
-const _RiskyComponent = _make(_Initializable, {
+const _RiskyComponent = _make('RiskyComponent', _Initializable, {
     _eventInitializeError ({
         data: {
             error
@@ -420,7 +420,7 @@ Sometimes you may want to skip initialization of certain parent classes or mixin
 import _Initializable from 'isotropic-initializable';
 import _make from 'isotropic-make';
 
-const _Logger = _make({
+const _Logger = _make('Logger', {
         log (message) {
             this.logs.push(`[${new Date().toISOString()}] ${message}`);
 
@@ -431,7 +431,7 @@ const _Logger = _make({
             this.logs = [];
         }
     }),
-    _Storage = _make({
+    _Storage = _make('Storage', {
         load (key) {
             return this.data[key];
         },
@@ -447,7 +447,7 @@ const _Logger = _make({
 
     // Component that uses _Logger and _Storage, but doesn't want
     // to initialize _Storage (maybe to use a custom implementation)
-    _MyComponent = _make(_Initializable, [
+    _MyComponent = _make('MyComponent', _Initializable, [
         _Logger,
         _Storage
     ], {
@@ -463,7 +463,7 @@ const _Logger = _make({
             this.data.set(key, value);
         },
         // Skip initialization of Storage
-        _doNotInitialize: Storage,
+        _doNotInitialize: _Storage,
         // _doNotInitialize could also be an Array or a Set
         _initialize () {
             console.log('MyComponent initializing');
@@ -493,11 +493,13 @@ The full lifecycle of an Initializable instance includes:
 
 It's not always necessary to destroy an instance. If there isn't anything that requires explicit cleanup, the garbage collector will take care of it.
 
+If an instance is destroyed while asynchronous initialization is still in progress, the pending initialization is abandoned: neither `initializeComplete` nor `initializeError` is published, the instance is left uninitialized. (`initialized` is `undefined` after destruction)
+
 ```javascript
 import _Initializable from 'isotropic-initializable';
 import _make from 'isotropic-make';
 
-const _Resource = _make(_Initializable, {
+const _Resource = _make('Resource', _Initializable, {
     use () {
         console.log(`Using resource: ${this.name}`);
 
@@ -559,14 +561,14 @@ _Initializable({
 
 ### Instance Methods
 
-- **initialize(...args)**: Start or restart initialization with the given arguments
+- **initialize(...args)**: Begin initialization with the given arguments. Initialization runs only once per instance; calling `initialize()` again after initialization has started or completed has no effect. Returns the instance.
 - **destroy(...args)**: Clean up and destroy the instance
 
 ### Protected Methods
 
-- **_initialize(...args)**: Define initialization behavior (implemented by subclasses)
-- **_initializeComplete(...args)**: Called when initialization completes (can be overridden)
-- **_initializeError()**: Called when initialization fails (can be overridden)
+- **_initialize(...args)**: Define initialization behavior (implemented by subclasses). May be synchronous or return a Promise; asynchronous methods are awaited before the next class in the chain initializes.
+- **_initializeComplete(...args)**: Called after initialization completes successfully (can be overridden)
+- **_initializeError(error)**: Called when initialization fails (can be overridden). The default implementation re-throws the error asynchronously, so that an unhandled initialization failure surfaces as an uncaught exception; override it to handle initialization errors yourself.
 
 ### Events
 
