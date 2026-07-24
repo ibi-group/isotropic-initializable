@@ -248,6 +248,43 @@ _test.describe('_Initializable', () => {
         ]);
     });
 
+    _test.it('should call an inherited _initialize method only once, at deepest position, when it is inherited multiple times', () => {
+        const initializeExecuted = [],
+
+            A = _make({
+                _initialize () {
+                    initializeExecuted.push(A);
+                }
+            }),
+            B = _make(A, {
+                _initialize () {
+                    initializeExecuted.push(B);
+                }
+            }),
+            C = _make(A, {
+                _initialize () {
+                    initializeExecuted.push(C);
+                }
+            }),
+            D = _make(_Initializable, [
+                B,
+                C
+            ], {
+                _initialize () {
+                    initializeExecuted.push(D);
+                }
+            });
+
+        D();
+
+        _chai.expect(initializeExecuted).to.deep.equal([
+            A,
+            B,
+            C,
+            D
+        ]);
+    });
+
     _test.it('should not call inherited _initialize methods on _doNotInitialize objects', () => {
         const initializeExecuted = [],
 
