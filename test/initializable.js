@@ -38,7 +38,7 @@ _test.describe('_Initializable', () => {
     _test.it('should pass initialization arguments', () => {
         let initializeExecuted = false;
 
-        const CustomInitializable = _make(_Initializable, {
+        _make(_Initializable, {
             _initialize (...args) {
                 _chai.expect(args).to.deep.equal([
                     'a',
@@ -47,11 +47,7 @@ _test.describe('_Initializable', () => {
                 ]);
                 initializeExecuted = true;
             }
-        });
-
-        _chai.expect(CustomInitializable).to.be.a('function');
-
-        CustomInitializable('a', 'b', 'c');
+        })('a', 'b', 'c');
 
         _chai.expect(initializeExecuted).to.be.true;
     });
@@ -130,19 +126,19 @@ _test.describe('_Initializable', () => {
             A = _make({
                 _initialize () {
                     _chai.expect(this).to.equal(z);
-                    initializeExecuted.push('A');
+                    initializeExecuted.push(A);
                 }
             }),
             B = _make({
                 _initialize () {
                     _chai.expect(this).to.equal(z);
-                    initializeExecuted.push('B');
+                    initializeExecuted.push(B);
                 }
             }),
             C = _make({
                 _initialize () {
                     _chai.expect(this).to.equal(z);
-                    initializeExecuted.push('C');
+                    initializeExecuted.push(C);
                 }
             }),
             X = _make(_Initializable, [
@@ -150,7 +146,7 @@ _test.describe('_Initializable', () => {
             ], {
                 _initialize () {
                     _chai.expect(this).to.equal(z);
-                    initializeExecuted.push('X');
+                    initializeExecuted.push(X);
                 }
             }),
             Y = _make(X, [
@@ -158,7 +154,7 @@ _test.describe('_Initializable', () => {
             ], {
                 _initialize () {
                     _chai.expect(this).to.equal(z);
-                    initializeExecuted.push('Y');
+                    initializeExecuted.push(Y);
                 }
             }),
             Z = _make(Y, [
@@ -166,35 +162,28 @@ _test.describe('_Initializable', () => {
             ], {
                 _initialize () {
                     _chai.expect(this).to.equal(z);
-                    initializeExecuted.push('Z');
+                    initializeExecuted.push(Z);
                 }
             });
-
-        _chai.expect(A).to.be.a('function');
-        _chai.expect(B).to.be.a('function');
-        _chai.expect(C).to.be.a('function');
-        _chai.expect(X).to.be.a('function');
-        _chai.expect(Y).to.be.a('function');
-        _chai.expect(Z).to.be.a('function');
 
         z = Z({
             initialize: false
         });
 
         z._initialize = () => {
-            initializeExecuted.push('z');
+            initializeExecuted.push(z);
         };
 
         z.initialize();
 
         _chai.expect(initializeExecuted).to.deep.equal([
-            'A',
-            'X',
-            'B',
-            'Y',
-            'C',
-            'Z',
-            'z'
+            A,
+            X,
+            B,
+            Y,
+            C,
+            Z,
+            z
         ]);
     });
 
@@ -206,25 +195,25 @@ _test.describe('_Initializable', () => {
             A = _make({
                 _initialize () {
                     _chai.expect(this).to.equal(e);
-                    initializeExecuted.push('A');
+                    initializeExecuted.push(A);
                 }
             }),
             B = _make({
                 _initialize () {
                     _chai.expect(this).to.equal(e);
-                    initializeExecuted.push('B');
+                    initializeExecuted.push(B);
                 }
             }),
             C = _make({
                 _initialize () {
                     _chai.expect(this).to.equal(e);
-                    initializeExecuted.push('C');
+                    initializeExecuted.push(C);
                 }
             }),
             D = _make({
                 _initialize () {
                     _chai.expect(this).to.equal(e);
-                    initializeExecuted.push('D');
+                    initializeExecuted.push(D);
                 }
             }),
             E = _make(_Initializable, [
@@ -235,33 +224,27 @@ _test.describe('_Initializable', () => {
             ], {
                 _initialize () {
                     _chai.expect(this).to.equal(e);
-                    initializeExecuted.push('E');
+                    initializeExecuted.push(E);
                 }
             });
-
-        _chai.expect(A).to.be.a('function');
-        _chai.expect(B).to.be.a('function');
-        _chai.expect(C).to.be.a('function');
-        _chai.expect(D).to.be.a('function');
-        _chai.expect(E).to.be.a('function');
 
         e = E({
             initialize: false
         });
 
         e._initialize = () => {
-            initializeExecuted.push('e');
+            initializeExecuted.push(e);
         };
 
         e.initialize();
 
         _chai.expect(initializeExecuted).to.deep.equal([
-            'A',
-            'B',
-            'C',
-            'D',
-            'E',
-            'e'
+            A,
+            B,
+            C,
+            D,
+            E,
+            e
         ]);
     });
 
@@ -270,17 +253,17 @@ _test.describe('_Initializable', () => {
 
             A = _make({
                 _initialize () {
-                    initializeExecuted.push('A');
+                    initializeExecuted.push(A);
                 }
             }),
             B = _make({
                 _initialize () {
-                    initializeExecuted.push('B');
+                    initializeExecuted.push(B);
                 }
             }),
             C = _make({
                 _initialize () {
-                    initializeExecuted.push('C');
+                    initializeExecuted.push(C);
                 }
             }),
             X = _make(_Initializable, [
@@ -288,14 +271,14 @@ _test.describe('_Initializable', () => {
             ], {
                 _doNotInitialize: A,
                 _initialize () {
-                    initializeExecuted.push('X');
+                    initializeExecuted.push(X);
                 }
             }),
             Y = _make(X, [
                 B
             ], {
                 _initialize () {
-                    initializeExecuted.push('Y');
+                    initializeExecuted.push(Y);
                 }
             }),
             Z = _make(Y, [
@@ -303,33 +286,26 @@ _test.describe('_Initializable', () => {
             ], {
                 _doNotInitialize: B,
                 _initialize () {
-                    initializeExecuted.push('Z');
+                    initializeExecuted.push(Z);
                 }
             }),
             z = Z({
                 initialize: false
             });
 
-        _chai.expect(A).to.be.a('function');
-        _chai.expect(B).to.be.a('function');
-        _chai.expect(C).to.be.a('function');
-        _chai.expect(X).to.be.a('function');
-        _chai.expect(Y).to.be.a('function');
-        _chai.expect(Z).to.be.a('function');
-
         z._doNotInitialize = z;
 
         z._initialize = () => {
-            initializeExecuted.push('z');
+            initializeExecuted.push(z);
         };
 
         z.initialize();
 
         _chai.expect(initializeExecuted).to.deep.equal([
-            'X',
-            'Y',
-            'C',
-            'Z'
+            X,
+            Y,
+            C,
+            Z
         ]);
     });
 
@@ -338,17 +314,17 @@ _test.describe('_Initializable', () => {
 
             A = _make({
                 _initialize () {
-                    initializeExecuted.push('A');
+                    initializeExecuted.push(A);
                 }
             }),
             B = _make({
                 _initialize () {
-                    initializeExecuted.push('B');
+                    initializeExecuted.push(B);
                 }
             }),
             C = _make({
                 _initialize () {
-                    initializeExecuted.push('C');
+                    initializeExecuted.push(C);
                 }
             }),
             X = _make(_Initializable, [
@@ -358,14 +334,14 @@ _test.describe('_Initializable', () => {
                     A
                 ],
                 _initialize () {
-                    initializeExecuted.push('X');
+                    initializeExecuted.push(X);
                 }
             }),
             Y = _make(X, [
                 B
             ], {
                 _initialize () {
-                    initializeExecuted.push('Y');
+                    initializeExecuted.push(Y);
                 }
             }),
             Z = _make(Y, [
@@ -376,34 +352,27 @@ _test.describe('_Initializable', () => {
                     C
                 ],
                 _initialize () {
-                    initializeExecuted.push('Z');
+                    initializeExecuted.push(Z);
                 }
             }),
             z = Z({
                 initialize: false
             });
 
-        _chai.expect(A).to.be.a('function');
-        _chai.expect(B).to.be.a('function');
-        _chai.expect(C).to.be.a('function');
-        _chai.expect(X).to.be.a('function');
-        _chai.expect(Y).to.be.a('function');
-        _chai.expect(Z).to.be.a('function');
-
         z._doNotInitialize = [
             z
         ];
 
         z._initialize = () => {
-            initializeExecuted.push('z');
+            initializeExecuted.push(z);
         };
 
         z.initialize();
 
         _chai.expect(initializeExecuted).to.deep.equal([
-            'X',
-            'Y',
-            'Z'
+            X,
+            Y,
+            Z
         ]);
     });
 
@@ -412,17 +381,17 @@ _test.describe('_Initializable', () => {
 
             A = _make({
                 _initialize () {
-                    initializeExecuted.push('A');
+                    initializeExecuted.push(A);
                 }
             }),
             B = _make({
                 _initialize () {
-                    initializeExecuted.push('B');
+                    initializeExecuted.push(B);
                 }
             }),
             C = _make({
                 _initialize () {
-                    initializeExecuted.push('C');
+                    initializeExecuted.push(C);
                 }
             }),
             X = _make(_Initializable, [
@@ -432,14 +401,14 @@ _test.describe('_Initializable', () => {
                     A
                 ]),
                 _initialize () {
-                    initializeExecuted.push('X');
+                    initializeExecuted.push(X);
                 }
             }),
             Y = _make(X, [
                 B
             ], {
                 _initialize () {
-                    initializeExecuted.push('Y');
+                    initializeExecuted.push(Y);
                 }
             }),
             Z = _make(Y, [
@@ -450,34 +419,27 @@ _test.describe('_Initializable', () => {
                     C
                 ]),
                 _initialize () {
-                    initializeExecuted.push('Z');
+                    initializeExecuted.push(Z);
                 }
             }),
             z = Z({
                 initialize: false
             });
 
-        _chai.expect(A).to.be.a('function');
-        _chai.expect(B).to.be.a('function');
-        _chai.expect(C).to.be.a('function');
-        _chai.expect(X).to.be.a('function');
-        _chai.expect(Y).to.be.a('function');
-        _chai.expect(Z).to.be.a('function');
-
         z._doNotInitialize = new Set([
             z
         ]);
 
         z._initialize = () => {
-            initializeExecuted.push('z');
+            initializeExecuted.push(z);
         };
 
         z.initialize();
 
         _chai.expect(initializeExecuted).to.deep.equal([
-            'X',
-            'Y',
-            'Z'
+            X,
+            Y,
+            Z
         ]);
     });
 
@@ -492,7 +454,7 @@ _test.describe('_Initializable', () => {
                         _later(34, resolve);
                     });
 
-                    initializeExecuted.push('A');
+                    initializeExecuted.push(A);
                 }
             }),
             B = _make({
@@ -501,7 +463,7 @@ _test.describe('_Initializable', () => {
                         _later(21, resolve);
                     });
 
-                    initializeExecuted.push('B');
+                    initializeExecuted.push(B);
                 }
             }),
             C = _make({
@@ -510,43 +472,36 @@ _test.describe('_Initializable', () => {
                         _later(13, resolve);
                     });
 
-                    initializeExecuted.push('C');
+                    initializeExecuted.push(C);
                 }
             }),
             X = _make(_Initializable, [
                 A
             ], {
                 _initialize () {
-                    initializeExecuted.push('X');
+                    initializeExecuted.push(X);
                 }
             }),
             Y = _make(X, [
                 B
             ], {
                 _initialize () {
-                    initializeExecuted.push('Y');
+                    initializeExecuted.push(Y);
                 }
             }),
             Z = _make(Y, [
                 C
             ], {
                 _initialize () {
-                    initializeExecuted.push('Z');
+                    initializeExecuted.push(Z);
                 }
             }),
             z = Z({
                 initialize: false
             });
 
-        _chai.expect(A).to.be.a('function');
-        _chai.expect(B).to.be.a('function');
-        _chai.expect(C).to.be.a('function');
-        _chai.expect(X).to.be.a('function');
-        _chai.expect(Y).to.be.a('function');
-        _chai.expect(Z).to.be.a('function');
-
         z._initialize = async () => {
-            initializeExecuted.push('z');
+            initializeExecuted.push(z);
 
             await new Promise(resolve => {
                 _later(2, resolve);
@@ -555,13 +510,13 @@ _test.describe('_Initializable', () => {
 
         z.on('initializeComplete', () => {
             _chai.expect(initializeExecuted).to.deep.equal([
-                'A',
-                'X',
-                'B',
-                'Y',
-                'C',
-                'Z',
-                'z'
+                A,
+                X,
+                B,
+                Y,
+                C,
+                Z,
+                z
             ]);
 
             callbackFunction();
@@ -573,16 +528,13 @@ _test.describe('_Initializable', () => {
     _test.it('should handle initialization errors', {
         timeout: 377
     }, (test, callbackFunction) => {
-        const CustomInitializable = _make(_Initializable, {
-                _initialize () {
-                    throw _Error({
-                        name: 'CustomInitializationError'
-                    });
-                }
-            }),
-            customInitializable = CustomInitializable();
-
-        _chai.expect(CustomInitializable).to.be.a('function');
+        const customInitializable = _make(_Initializable, {
+            _initialize () {
+                throw _Error({
+                    name: 'CustomInitializationError'
+                });
+            }
+        })();
 
         _chai.expect(customInitializable).to.have.property('initialized', false);
 
@@ -619,16 +571,20 @@ _test.describe('_Initializable', () => {
                 _Initializable
             ], {
                 _init (...args) {
+                    methodsExecuted.push(A, '_init');
+
                     return Reflect.apply(_Initializable.prototype._init, this, args);
                 },
                 _initialize () {
-                    methodsExecuted.push('a');
+                    methodsExecuted.push(A, '_initialize');
                 }
             }),
             B = _make([
                 A
             ], {
                 _init (...args) {
+                    methodsExecuted.push(B, '_init');
+
                     return Reflect.apply(_Initializable.prototype._init, this, args);
                 }
             }),
@@ -636,25 +592,27 @@ _test.describe('_Initializable', () => {
                 B
             ], {
                 _init (...args) {
+                    methodsExecuted.push(C, '_init');
+
                     return Reflect.apply(_Initializable.prototype._init, this, args);
                 },
                 _initialize () {
-                    methodsExecuted.push('c');
+                    methodsExecuted.push(C, '_initialize');
                 }
             }),
             c = C();
-
-        _chai.expect(A).to.be.a('function');
-        _chai.expect(B).to.be.a('function');
-        _chai.expect(C).to.be.a('function');
 
         _chai.expect(c).not.to.be.an.instanceOf(_Initializable);
 
         _chai.expect(c).to.have.property('initialized', true);
 
         _chai.expect(methodsExecuted).to.deep.equal([
-            'a',
-            'c'
+            C,
+            '_init',
+            A,
+            '_initialize',
+            C,
+            '_initialize'
         ]);
 
         c.destroy();
@@ -665,16 +623,13 @@ _test.describe('_Initializable', () => {
     _test.it('should handle rejected asynchronous _initialize methods', {
         timeout: 377
     }, (test, callbackFunction) => {
-        const CustomInitializable = _make(_Initializable, {
-                _initialize () {
-                    return Promise.reject(_Error({
-                        name: 'AsyncInitializationError'
-                    }));
-                }
-            }),
-            customInitializable = CustomInitializable();
-
-        _chai.expect(CustomInitializable).to.be.a('function');
+        const customInitializable = _make(_Initializable, {
+            _initialize () {
+                return Promise.reject(_Error({
+                    name: 'AsyncInitializationError'
+                }));
+            }
+        })();
 
         _chai.expect(customInitializable).to.have.property('initialized', false);
 
@@ -707,7 +662,7 @@ _test.describe('_Initializable', () => {
     _test.it('should allow _initializeError to be overridden to handle errors', {
         timeout: 377
     }, (test, callbackFunction) => {
-        const CustomInitializable = _make(_Initializable, {
+        _chai.expect(_make(_Initializable, {
             _initialize () {
                 throw _Error({
                     name: 'CustomInitializationError'
@@ -719,23 +674,17 @@ _test.describe('_Initializable', () => {
 
                 callbackFunction();
             }
-        });
-
-        _chai.expect(CustomInitializable).to.be.a('function');
-        _chai.expect(CustomInitializable()).to.have.property('initialized', false);
+        })()).to.have.property('initialized', false);
     });
 
     _test.it('should initialize only once', () => {
         let initializeCount = 0;
 
-        const CustomInitializable = _make(_Initializable, {
-                _initialize () {
-                    initializeCount += 1;
-                }
-            }),
-            customInitializable = CustomInitializable();
-
-        _chai.expect(CustomInitializable).to.be.a('function');
+        const customInitializable = _make(_Initializable, {
+            _initialize () {
+                initializeCount += 1;
+            }
+        })();
 
         _chai.expect(customInitializable).to.have.property('initialized', true);
         _chai.expect(initializeCount).to.equal(1);
@@ -752,16 +701,13 @@ _test.describe('_Initializable', () => {
     _test.it('should not crash when destroyed during asynchronous initialization', {
         timeout: 377
     }, (test, callbackFunction) => {
-        const CustomInitializable = _make(_Initializable, {
-                _initialize () {
-                    return new Promise(resolve => {
-                        _later(2, resolve);
-                    });
-                }
-            }),
-            customInitializable = CustomInitializable();
-
-        _chai.expect(CustomInitializable).to.be.a('function');
+        const customInitializable = _make(_Initializable, {
+            _initialize () {
+                return new Promise(resolve => {
+                    _later(2, resolve);
+                });
+            }
+        })();
 
         _chai.expect(customInitializable).to.have.property('initialized', false);
 
@@ -779,20 +725,17 @@ _test.describe('_Initializable', () => {
     _test.it('should not crash when destroyed during asynchronous initialization that fails', {
         timeout: 377
     }, (test, callbackFunction) => {
-        const CustomInitializable = _make(_Initializable, {
-                _initialize () {
-                    return new Promise((resolve, reject) => {
-                        _later(2, () => {
-                            reject(_Error({
-                                name: 'AsyncInitializationError'
-                            }));
-                        });
+        const customInitializable = _make(_Initializable, {
+            _initialize () {
+                return new Promise((resolve, reject) => {
+                    _later(2, () => {
+                        reject(_Error({
+                            name: 'AsyncInitializationError'
+                        }));
                     });
-                }
-            }),
-            customInitializable = CustomInitializable();
-
-        _chai.expect(CustomInitializable).to.be.a('function');
+                });
+            }
+        })();
 
         _chai.expect(customInitializable).to.have.property('initialized', false);
 
