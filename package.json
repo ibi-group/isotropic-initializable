@@ -43,5 +43,5 @@
         "test": "c8 -c ./node_modules/isotropic-dev-dependencies/config/c8.json node --test"
     },
     "type": "module",
-    "version": "0.13.0"
+    "version": "0.13.1"
 }
