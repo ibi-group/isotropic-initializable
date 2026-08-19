@@ -33,7 +33,10 @@
     "license": "BSD-3-Clause",
     "main": "lib/initializable.js",
     "name": "isotropic-initializable",
-    "repository": "github:ibi-group/isotropic-initializable",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ibi-group/isotropic-initializable.git"
+    },
     "scripts": {
         "lint": "eslint eslint.config.js lib test",
         "posttest": "c8 -c ./node_modules/isotropic-dev-dependencies/config/c8.json check-coverage",
