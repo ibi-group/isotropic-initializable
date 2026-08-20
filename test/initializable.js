@@ -784,4 +784,331 @@ _test.describe('_Initializable', () => {
             callbackFunction();
         });
     });
+
+    _test.it('should resolve an until promise when asynchronous initialization completes', async () => {
+        const customInitializable = _make(_Initializable, {
+            _initialize () {
+                return new Promise(resolve => {
+                    _later(2, resolve);
+                });
+            }
+        })('a', 'b');
+
+        _chai.expect(customInitializable).to.have.property('initialized', false);
+
+        {
+            const eventSnapshot = await customInitializable.until('initializeComplete');
+
+            _chai.expect(eventSnapshot).to.have.property('name', 'initializeComplete');
+            _chai.expect(eventSnapshot).to.have.property('stageName', 'after');
+            _chai.expect(eventSnapshot).to.have.property('publisher', customInitializable);
+            _chai.expect(eventSnapshot.data.args).to.deep.equal([
+                'a',
+                'b'
+            ]);
+        }
+
+        _chai.expect(customInitializable).to.have.property('initialized', true);
+
+        customInitializable.destroy();
+    });
+
+    _test.it('should resolve an until promise for an already initialized object', async () => {
+        const customInitializable = _Initializable();
+
+        _chai.expect(customInitializable).to.have.property('initialized', true);
+
+        _chai.expect(await customInitializable.until('initializeComplete')).to.have.property('name', 'initializeComplete');
+
+        customInitializable.destroy();
+    });
+
+    _test.it('should resolve an until promise racing initializeComplete and initializeError', async () => {
+        const customInitializable = _make(_Initializable, {
+            _initialize () {
+                return Promise.reject(_Error({
+                    name: 'AsyncInitializationError'
+                }));
+            },
+            _initializeError () {
+                // The awaiting code takes responsibility for the failure
+            }
+        })();
+
+        {
+            const eventSnapshot = await customInitializable.until({
+                eventName: [
+                    'initializeComplete',
+                    'initializeError'
+                ]
+            });
+
+            _chai.expect(eventSnapshot).to.have.property('name', 'initializeError');
+            _chai.expect(eventSnapshot.data.error).to.be.an.instanceOf(_Error);
+            _chai.expect(eventSnapshot.data.error).to.have.property('message', 'Initialize error');
+            _chai.expect(eventSnapshot.data.error.error).to.have.property('name', 'AsyncInitializationError');
+        }
+
+        _chai.expect(customInitializable).to.have.property('initialized', false);
+
+        customInitializable.destroy();
+    });
+
+    _test.it('should resolve an until promise for an initializeError that was already published', async () => {
+        const customInitializable = _make(_Initializable, {
+            _initialize () {
+                return Promise.reject(_Error({
+                    name: 'AsyncInitializationError'
+                }));
+            },
+            _initializeError () {
+                // The awaiting code takes responsibility for the failure
+            }
+        })();
+
+        await customInitializable.until('initializeError');
+
+        {
+            const eventSnapshot = await customInitializable.until('initializeError');
+
+            _chai.expect(eventSnapshot).to.have.property('name', 'initializeError');
+            _chai.expect(eventSnapshot.data.error.error).to.have.property('name', 'AsyncInitializationError');
+        }
+
+        customInitializable.destroy();
+    });
+
+    _test.it('should resolve an until promise when deferred initialization begins', async () => {
+        const customInitializable = _Initializable({
+                initialize: false
+            }),
+            promise = customInitializable.until('initialize');
+
+        _chai.expect(customInitializable).to.have.property('initialized', false);
+
+        _later(2, () => {
+            customInitializable.initialize('a', 'b');
+        });
+
+        {
+            const eventSnapshot = await promise;
+
+            _chai.expect(eventSnapshot).to.have.property('name', 'initialize');
+            _chai.expect(eventSnapshot.data.args).to.deep.equal([
+                'a',
+                'b'
+            ]);
+        }
+
+        customInitializable.destroy();
+    });
+
+    _test.it('should resolve an until promise racing initializeComplete and destroyComplete', async () => {
+        const customInitializable = _make(_Initializable, {
+                _initialize () {
+                    return new Promise(resolve => {
+                        _later(21, resolve);
+                    });
+                }
+            })(),
+            promise = customInitializable.until({
+                eventName: [
+                    'destroyComplete',
+                    'initializeComplete'
+                ]
+            });
+
+        customInitializable.destroy();
+
+        _chai.expect(await promise).to.have.property('name', 'destroyComplete');
+    });
+
+    _test.it('should reject an until promise when initialization exceeds a timeout', async () => {
+        let rejectedError = null;
+
+        const customInitializable = _Initializable({
+            initialize: false
+        });
+
+        try {
+            await customInitializable.until({
+                eventName: 'initializeComplete',
+                subject: 'Initialization',
+                timeout: 2
+            });
+        } catch (error) {
+            rejectedError = error;
+        }
+
+        _chai.expect(rejectedError).to.have.property('name', 'TimeoutError');
+        _chai.expect(rejectedError).to.have.property('message', 'Initialization timed out');
+
+        customInitializable.destroy();
+    });
+
+    _test.it('should resolve untilInitialized when initialization completes', async () => {
+        const customInitializable = _make(_Initializable, {
+            _initialize () {
+                return new Promise(resolve => {
+                    _later(2, resolve);
+                });
+            }
+        })('a', 'b');
+
+        {
+            const eventSnapshot = await customInitializable.untilInitialized();
+
+            _chai.expect(eventSnapshot).to.have.property('name', 'initializeComplete');
+            _chai.expect(eventSnapshot).to.have.property('publisher', customInitializable);
+            _chai.expect(eventSnapshot.data.args).to.deep.equal([
+                'a',
+                'b'
+            ]);
+        }
+
+        _chai.expect(customInitializable).to.have.property('initialized', true);
+
+        customInitializable.destroy();
+    });
+
+    _test.it('should resolve untilInitialized for an already initialized object', async () => {
+        const customInitializable = _Initializable();
+
+        _chai.expect(await customInitializable.untilInitialized()).to.have.property('name', 'initializeComplete');
+
+        customInitializable.destroy();
+    });
+
+    _test.it('should reject untilInitialized when initialization fails', async () => {
+        let error;
+
+        const customInitializable = _make(_Initializable, {
+            _initialize () {
+                return Promise.reject(_Error({
+                    name: 'AsyncInitializationError'
+                }));
+            },
+            _initializeError () {
+                // The awaiting code takes responsibility for the failure
+            }
+        })();
+
+        try {
+            await customInitializable.untilInitialized();
+        } catch (caughtError) {
+            error = caughtError;
+        }
+
+        _chai.expect(error).to.be.an.instanceOf(_Error);
+        _chai.expect(error).to.have.property('name', 'RejectError');
+        _chai.expect(error).to.have.property('message', 'Initialization rejected');
+        _chai.expect(error.details.eventSnapshot).to.have.property('name', 'initializeError');
+        _chai.expect(error.details.eventSnapshot.data.error.error).to.have.property('name', 'AsyncInitializationError');
+
+        customInitializable.destroy();
+    });
+
+    _test.it('should reject untilInitialized when the instance gets destroyed during initialization', async () => {
+        let error;
+
+        const customInitializable = _make(_Initializable, {
+                _initialize () {
+                    return new Promise(resolve => {
+                        _later(2, resolve);
+                    });
+                }
+            })(),
+            promise = customInitializable.untilInitialized();
+
+        customInitializable.destroy();
+
+        try {
+            await promise;
+        } catch (caughtError) {
+            error = caughtError;
+        }
+
+        _chai.expect(error).to.be.an.instanceOf(_Error);
+        _chai.expect(error).to.have.property('name', 'RejectError');
+        _chai.expect(error).to.have.property('message', 'Initialization rejected');
+        _chai.expect(error.details.eventSnapshot).to.have.property('name', 'destroyComplete');
+    });
+
+    _test.it('should reject untilInitialized for an object whose initialization already failed', async () => {
+        let error;
+
+        const customInitializable = _make(_Initializable, {
+            _initialize () {
+                return Promise.reject(_Error({
+                    name: 'AsyncInitializationError'
+                }));
+            },
+            _initializeError () {
+                // The awaiting code takes responsibility for the failure
+            }
+        })();
+
+        await customInitializable.until('initializeError');
+
+        try {
+            await customInitializable.untilInitialized();
+        } catch (caughtError) {
+            error = caughtError;
+        }
+
+        _chai.expect(error).to.have.property('name', 'RejectError');
+
+        customInitializable.destroy();
+    });
+
+    _test.it('should allow an untilInitialized promise to be canceled', async () => {
+        let error;
+
+        const abortController = new AbortController(),
+            abortReason = _Error({
+                message: 'Abort reason',
+                name: 'AbortReasonError'
+            }),
+            customInitializable = _make(_Initializable, {
+                _initialize () {
+                    return new Promise(resolve => {
+                        _later(2, resolve);
+                    });
+                }
+            })();
+
+        abortController.abort(abortReason);
+
+        try {
+            await customInitializable.untilInitialized({
+                signal: abortController.signal
+            });
+        } catch (caughtError) {
+            error = caughtError;
+        }
+
+        _chai.expect(error).to.be.an.instanceOf(_Error);
+        _chai.expect(error).to.have.property('error', abortReason);
+        _chai.expect(error).to.have.property('message', 'Initialization aborted');
+        _chai.expect(error).to.have.property('name', 'AbortError');
+
+        customInitializable.destroy();
+    });
+
+    _test.it('should allow an untilInitialized promise to be unsubscribed', () => {
+        const customInitializable = _make(_Initializable, {
+                _initialize () {
+                    return new Promise(resolve => {
+                        _later(2, resolve);
+                    });
+                }
+            })(),
+            promise = customInitializable.untilInitialized();
+
+        _chai.expect(promise).to.have.property('subscribed').that.is.true;
+        _chai.expect(promise.unsubscribe()).to.be.true;
+        _chai.expect(promise).to.have.property('subscribed').that.is.false;
+
+        customInitializable.destroy();
+    });
 });

@@ -12,6 +12,7 @@ An observable initialization lifecycle for JavaScript objects. Ensures parent-to
 - **Predictable Initialization Order**: Ensures parent class initialization completes before child classes initialize
 - **Asynchronous Support**: Works with both synchronous and promise-based initialization methods
 - **Observable Lifecycle Events**: Subscribe to initialization events for greater control
+- **Awaitable**: `await` an instance's initialization instead of nesting the rest of your code in a callback function, with failures raised as rejections
 - **Mixin Support**: Works seamlessly with `isotropic-make` mixins
 - **Selective Initialization**: Configure which classes in the hierarchy should initialize
 - **Error Handling**: Built-in error propagation for initialization failures
@@ -104,6 +105,109 @@ component.on('initializeError', ({
 component.initialize();
 ```
 
+### Awaiting Initialization
+
+The `untilInitialized()` method returns a promise that settles with the outcome of initialization. It resolves with the `initializeComplete` [event snapshot](https://github.com/ibi-group/isotropic-pubsub#event-snapshot) when initialization succeeds, and rejects when it fails:
+
+```javascript
+const component = _Component();
+
+await component.untilInitialized();
+
+// The instance is fully initialized here
+```
+
+This is usually what you want instead of an `initializeComplete` subscription. The work that depends on initialization stays in the enclosing function rather than moving into a callback function, and it composes with everything else you `await`.
+
+Under the hood it calls the inherited `until` method with both lifecycle events configured, so it is equivalent to writing this yourself:
+
+```javascript
+await component.until({
+    eventName: 'initializeComplete',
+    reject: [
+        'destroyComplete',
+        'initializeError'
+    ],
+    subject: 'Initialization'
+});
+```
+
+#### It Works Whether Or Not Initialization Has Already Completed
+
+The `initializeComplete` and `initializeError` events are declared `publishOnce`. Subscribing to a `publishOnce` event that has already been published executes the subscription immediately, so the promise settles even when you are late:
+
+```javascript
+const component = _Component();
+
+// Synchronous initialization has already finished by this point
+console.log(component.initialized); // true
+
+// Resolves anyway
+await component.untilInitialized();
+```
+
+That property is what makes awaiting initialization reliable. You never have to know whether a given instance initializes synchronously or asynchronously, and you never have to win a race against it. The same call is correct in both cases, and it stays correct if a subclass later makes its `_initialize` method asynchronous.
+
+#### Awaiting An Initialization That Might Fail
+
+When initialization fails, the promise rejects with an `isotropic-error` named `RejectError`, so an ordinary `try`/`catch` handles both outcomes:
+
+```javascript
+try {
+    await component.untilInitialized();
+} catch (error) {
+    // error.name is 'RejectError'
+    // error.details.eventSnapshot.data.error is the wrapped 'Initialize error'
+    // error.details.eventSnapshot.data.error.error is what _initialize actually threw
+    console.error(error.details.eventSnapshot.data.error);
+}
+```
+
+#### Timeouts And Cancellation
+
+An `untilInitialized` subscription is a cancelable task, so a promise waiting on initialization accepts the same cancellation options as any other isotropic cancelable task, and the returned promise carries `cancel`, `unsubscribe`, and `Symbol.dispose`:
+
+```javascript
+try {
+    await component.untilInitialized({
+        timeout: 5000
+    });
+} catch (error) {
+    // Error: Initialization timed out
+}
+```
+
+The promise returned by `untilInitialized()` carries the same `cancel`, `unsubscribe`, and `Symbol.dispose` members, so it can be released the same way.
+
+#### Destruction During Initialization
+
+If an instance is destroyed while asynchronous initialization is still pending, neither `initializeComplete` nor `initializeError` is published but `destroyComplete` is published and rejects the promise.
+
+For an instance that can be destroyed out from under you, the event snapshot's name will tell you whether it was rejected due to a `destroyComplete` event or an `initializeError` event:
+
+```javascript
+try {
+    await component.untilInitialized();
+} catch (error) {
+    if (error.details.eventSnapshot.name === 'destroyComplete') {
+        // Destroyed before initialization finished
+    }
+}
+```
+
+#### Awaiting Initialization To Begin
+
+Deferred instances publish `initialize` when initialization starts, and it can be awaited like any other event. The snapshot's `data.args` holds the arguments initialization was started with:
+
+```javascript
+const component = _Component({
+        initialize: false
+    }),
+    eventSnapshot = await component.until('initialize');
+
+console.log('Initializing with:', eventSnapshot.data.args);
+```
+
 ### Initialization Status
 
 You can check the initialization status of any Initializable object:
@@ -176,7 +280,21 @@ const _DataComponent = _make('DataComponent', _Initializable, {
         id: '123'
     });
 
-    // Listen for completion
+    // Wait for completion
+    await component.untilInitialized();
+
+    component.displayData();
+}
+```
+
+A subscription works too, and is the better choice when the completion handling belongs to the component rather than to the code that constructed it:
+
+```javascript
+{
+    const component = _DataComponent({
+        id: '123'
+    });
+
     component.on('initializeComplete', () => {
         component.displayData();
     });
@@ -370,14 +488,6 @@ import _Initializable from 'isotropic-initializable';
 import _make from 'isotropic-make';
 
 const _RiskyComponent = _make('RiskyComponent', _Initializable, {
-    _eventInitializeError ({
-        data: {
-            error
-        }
-    }) {
-        // This event handler method gets executed if initialization fails.
-        console.error('Initialization failed:', error);
-    },
     async _initialize (config) {
         if (!config.apiKey) {
             throw _Error({
@@ -402,6 +512,11 @@ const _RiskyComponent = _make('RiskyComponent', _Initializable, {
         }
 
         this.connection = await response.json();
+    },
+    _initializeError (error) {
+        // This method gets executed if initialization fails. Because this class
+        // can fail to initialize, it is responsible for implementing it.
+        console.error('Initialization failed:', error);
     }
 });
 
@@ -409,6 +524,61 @@ const _RiskyComponent = _make('RiskyComponent', _Initializable, {
     const component = _RiskyComponent({
         // Missing apiKey
     });
+}
+```
+
+See [Initialization Error Handling](#initialization-error-handling) for why implementing `_initializeError` is a requirement rather than an option.
+
+### An Asynchronous Factory Function
+
+A constructor cannot return a promise, so an instance with asynchronous initialization is always constructed before it is ready. Awaiting the lifecycle events lets you wrap that behind a factory function that hands back only fully initialized instances, and reports failures the way the rest of your asynchronous code reports them.
+
+```javascript
+import _Initializable from 'isotropic-initializable';
+import _make from 'isotropic-make';
+
+const _Connection = _make('Connection', _Initializable, {
+    query (sql) {
+        return this.client.query(sql);
+    },
+    _destroy (...args) {
+        this.client?.close();
+
+        return Reflect.apply(_Initializable.prototype._destroy, this, args);
+    },
+    async _initialize (config) {
+        this.client = await connect(config.url);
+    },
+    _initializeError () {
+        // Handled here so the base assertion does not fire. This class is
+        // only ever constructed by _createConnection below, which awaits
+        // the outcome and reports the failure to its caller.
+    }
+}, {
+    async create (config) {
+        const connection = this(config);
+
+        try {
+            await connection.untilInitialized();
+        } catch (error) {
+            connection.destroy();
+
+            throw error.details.eventSnapshot.data.error;
+        }
+
+        return connection;
+    }
+});
+
+{
+    // Either a usable connection or a thrown error, never a half-built object
+    const connection = await _Connection.create({
+        url: 'postgres://localhost/app'
+    });
+
+    await connection.query('select 1');
+
+    connection.destroy();
 }
 ```
 
@@ -478,6 +648,79 @@ const _Logger = _make('Logger', {
     const component = _MyComponent();
 
     // Only _Logger and _MyComponent will initialize, _Storage will be skipped
+}
+```
+
+## Initialization Error Handling
+
+Initialization failure is the one part of the lifecycle a base class cannot decide for you. `isotropic-initializable` has no idea what a subclass does in its `_initialize` method, so it has no idea what a failure means or what the appropriate response is. Retry? Fall back to a default? Log and continue degraded? Tear the instance down? Only the class that defined the initialization behavior knows. So rather than guess, `isotropic-initializable` routes every failure to a designated place and requires the subclass to fill it in.
+
+### The Mechanism
+
+When an `_initialize` method throws or rejects, the error is wrapped in an `isotropic-error` and published as the `initializeError` event.
+
+That event is an ordinary event with the full `before`, `on`, `complete`, `after` lifecycle. Observers subscribed to the stages before `complete` see the error first and may call `prevent()` to stop the event from completing. If the event does complete, its complete stage calls `_initializeError(error)`.
+
+`_initializeError` is the designated place for a class to handle its own initialization failures. **If it is possible for your initialization to fail, implement `_initializeError`.**
+
+```javascript
+const _Component = _make('Component', _Initializable, {
+    async _initialize (config) {
+        this.connection = await connect(config.url);
+    },
+    _initializeError (error) {
+        // This class knows what its own failure means, so it decides here
+        this.connection = null;
+        this.degraded = true;
+
+        _logger.error({
+            error
+        }, 'Component initialization failed; running degraded');
+    }
+});
+```
+
+### Why The Base Method Throws
+
+The base `_initializeError` is not a fallback. It is an assertion, and it is never intended to run.
+
+Reaching it means initialization failed and nothing in the class hierarchy, and no observer, took responsibility for the failure. The worst possible response would be to swallow the error, leaving a half-built instance in circulation with no indication that anything went wrong. So the base method rethrows asynchronously, via `isotropic-later`, in a way that is deliberately difficult to suppress: the throw does not happen inside any promise chain or `try` block belonging to the code that triggered initialization, so it cannot be accidentally caught and discarded. It surfaces as an uncaught exception, which is what an unhandled programming error should look like.
+
+If you see `Error: Initialize error` reach your process's uncaught exception handler, that is the library telling you a class with fallible initialization is missing an `_initializeError` implementation. The fix is to implement it, not to catch the rethrow.
+
+### Where To Handle It
+
+There are three places a failure can be handled, in the order they run:
+
+1. **An observer subscribed to `initializeError`.** Subscribers at the `before` and `on` stages run first and may call `prevent()` to stop the event before it completes, which suppresses `_initializeError` entirely. Use this when handling belongs to whatever is watching the instance rather than to the class itself.
+2. **`_initializeError(error)`, the complete stage.** The normal answer. This is the class taking responsibility for its own failure modes.
+3. **`_eventInitializeError(event)`, the complete stage function.** Overriding this replaces the dispatch machinery that calls `_initializeError`, so the method no longer runs unless your override calls it. Reach for it only when you need the event object rather than the error.
+
+Note that preventing the complete stage also prevents the `after` stage, so a promise from `until('initializeError')` at its default `after` stage will not resolve for an event an observer prevented.
+
+### Errors Are Retained For Late Arrivals
+
+`initializeError` is declared `publishOnce`, so the failure is not a moment you can miss. Code that subscribes, or awaits, after the failure has already been published is executed immediately with the original event. There is no window in which an instance has failed but the failure is undiscoverable, and there is no need for the instance to keep a separate reference to the error.
+
+```javascript
+// Executes immediately if initialization has already failed
+component.on('initializeError', ({
+    data: {
+        error
+    }
+}) => {
+    console.error(error);
+});
+```
+
+### The Shape Of The Error
+
+The `initializeError` event's `data.error` is an `isotropic-error` with the message `'Initialize error'`. Its `error` property is the original error thrown by the `_initialize` method. The same wrapped error is the argument passed to `_initializeError`.
+
+```javascript
+_initializeError (error) {
+    console.log(error.message); // 'Initialize error'
+    console.log(error.error); // The error your _initialize method threw
 }
 ```
 
@@ -563,18 +806,25 @@ _Initializable({
 
 - **initialize(...args)**: Begin initialization with the given arguments. Initialization runs only once per instance; calling `initialize()` again after initialization has started or completed has no effect. Returns the instance.
 - **destroy(...args)**: Clean up and destroy the instance
+- **untilInitialized()**: Return a promise that resolves with the `initializeComplete` event snapshot, or rejects with a `RejectError` if initialization fails. See [Awaiting Initialization](#awaiting-initialization).
+
+All of the other `isotropic-pubsub` instance methods are inherited as well, including `after`, `before`, `on`, `onceAfter`, `onceBefore`, `onceOn`, `publish`, `subscribe`, and `until`.
 
 ### Protected Methods
 
 - **_initialize(...args)**: Define initialization behavior (implemented by subclasses). May be synchronous or return a Promise; asynchronous methods are awaited before the next class in the chain initializes.
 - **_initializeComplete(...args)**: Called after initialization completes successfully (can be overridden)
-- **_initializeError(error)**: Called when initialization fails (can be overridden). The default implementation re-throws the error asynchronously, so that an unhandled initialization failure surfaces as an uncaught exception; override it to handle initialization errors yourself.
+- **_initializeError(error)**: Called when initialization fails. **Implement this in any class whose initialization can fail.** The base implementation is an assertion that no handler was provided: it rethrows the error asynchronously so that an unhandled initialization failure surfaces as an uncaught exception. See [Initialization Error Handling](#initialization-error-handling).
 
 ### Events
 
-- **initialize**: Triggered when initialization begins
-- **initializeComplete**: Triggered when initialization completes successfully
-- **initializeError**: Triggered if initialization fails, with error data
+Each event's `data` is described below as it appears on a subscriber's event object, or on the snapshot resolved by `until`.
+
+- **initialize**: Published when initialization begins. `data.args` is an array of the arguments initialization was started with. Declared `completeOnce`, so initialization begins at most once.
+- **initializeComplete**: Published when initialization completes successfully. `data.args` is an array of the arguments initialization was started with. Declared `publishOnce`, so subscribing after it has been published executes immediately.
+- **initializeError**: Published if initialization fails. `data.error` is an `isotropic-error` with the message `'Initialize error'`; its `error` property is what `_initialize` threw. Declared `publishOnce`, so subscribing after it has been published executes immediately.
+
+Neither `initializeComplete` nor `initializeError` is published if the instance is destroyed while asynchronous initialization is still pending.
 
 ## Integration with Other isotropic Modules
 
