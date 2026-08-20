@@ -1111,4 +1111,98 @@ _test.describe('_Initializable', () => {
 
         customInitializable.destroy();
     });
+
+    _test.it('should report the initialization status', async () => {
+        let error;
+
+        const customInitializable = _make(_Initializable, {
+                _initialize () {
+                    return new Promise(resolve => {
+                        _later(2, resolve);
+                    });
+                }
+            })({
+                initialize: false
+            }),
+            errorInitializable = _make(_Initializable, {
+                _initialize () {
+                    return Promise.reject(_Error({
+                        name: 'AsyncInitializationError'
+                    }));
+                },
+                _initializeError () {
+                    // The awaiting code takes responsibility for the failure
+                }
+            })({
+                initialize: false
+            });
+
+        _chai.expect(customInitializable).to.have.property('initialized', false);
+        _chai.expect(customInitializable).to.have.property('initializeFailed', false);
+        _chai.expect(customInitializable).to.have.property('initializing', false);
+
+        customInitializable.initialize();
+
+        _chai.expect(customInitializable).to.have.property('initialized', false);
+        _chai.expect(customInitializable).to.have.property('initializeFailed', false);
+        _chai.expect(customInitializable).to.have.property('initializing', true);
+
+        await customInitializable.untilInitialized();
+
+        _chai.expect(customInitializable).to.have.property('initialized', true);
+        _chai.expect(customInitializable).to.have.property('initializeFailed', false);
+        _chai.expect(customInitializable).to.have.property('initializing', false);
+
+        customInitializable.destroy();
+
+        _chai.expect(customInitializable.initialized).to.be.undefined;
+        _chai.expect(customInitializable.initializeFailed).to.be.undefined;
+        _chai.expect(customInitializable.initializing).to.be.undefined;
+
+        _chai.expect(errorInitializable).to.have.property('initialized', false);
+        _chai.expect(errorInitializable).to.have.property('initializeFailed', false);
+        _chai.expect(errorInitializable).to.have.property('initializing', false);
+
+        errorInitializable.initialize();
+
+        _chai.expect(errorInitializable).to.have.property('initialized', false);
+        _chai.expect(errorInitializable).to.have.property('initializeFailed', false);
+        _chai.expect(errorInitializable).to.have.property('initializing', true);
+
+        try {
+            await errorInitializable.untilInitialized();
+        } catch (caughtError) {
+            error = caughtError;
+        }
+
+        _chai.expect(error).to.have.property('name', 'RejectError');
+
+        _chai.expect(errorInitializable).to.have.property('initialized', false);
+        _chai.expect(errorInitializable).to.have.property('initializeFailed', true);
+        _chai.expect(errorInitializable).to.have.property('initializing', false);
+
+        errorInitializable.destroy();
+
+        _chai.expect(errorInitializable.initialized).to.be.undefined;
+        _chai.expect(errorInitializable.initializeFailed).to.be.undefined;
+        _chai.expect(errorInitializable.initializing).to.be.undefined;
+    });
+
+    _test.it('should not report initializing when the initialize event is prevented', () => {
+        const customInitializable = _Initializable({
+            initialize: false
+        });
+
+        customInitializable.before('initialize', event => {
+            event.prevent();
+        });
+
+        customInitializable.initialize();
+
+        _chai.expect(customInitializable).to.have.property('initialized', false);
+        _chai.expect(customInitializable).to.have.property('initializing', false);
+        _chai.expect(customInitializable).to.have.property('initializeFailed', false);
+
+        customInitializable.destroy();
+    });
 });

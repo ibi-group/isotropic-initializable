@@ -210,13 +210,25 @@ console.log('Initializing with:', eventSnapshot.data.args);
 
 ### Initialization Status
 
-You can check the initialization status of any Initializable object:
+Three Boolean getters report where an instance is in its lifecycle:
 
 ```javascript
 const component = _Component();
 
-console.log(component.initialized); // true if initialization completed
+console.log(component.initialized); // Initialization completed successfully
+console.log(component.initializeFailed); // Initialization failed
+console.log(component.initializing); // Initialization is in progress
 ```
+
+At most one of them is ever `true`. All three are `false` when initialization has not begun, which is the state of an instance constructed with `initialize: false` that has not been initialized yet, or any instance whose `initialize` event was prevented. An instance becomes `initializing` when the `initialize` event reaches its complete stage. All three are `undefined` once the instance has been destroyed.
+
+| | `initialized` | `initializeFailed` | `initializing` |
+| --- | --- | --- | --- |
+| Not begun | `false` | `false` | `false` |
+| In progress | `false` | `false` | `true` |
+| Succeeded | `true` | `false` | `false` |
+| Failed | `false` | `true` | `false` |
+| Destroyed | `undefined` | `undefined` | `undefined` |
 
 ## Examples
 
@@ -800,7 +812,11 @@ _Initializable({
 
 ### Instance Properties
 
-- **initialized** (Boolean): Whether initialization has completed successfully
+- **initialized** (Boolean): Whether initialization completed successfully
+- **initializeFailed** (Boolean): Whether initialization failed
+- **initializing** (Boolean): Whether initialization is in progress
+
+At most one is `true`. All three are `false` before initialization begins and `undefined` after the instance is destroyed. See [Initialization Status](#initialization-status).
 
 ### Instance Methods
 
