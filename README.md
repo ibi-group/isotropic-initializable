@@ -698,7 +698,43 @@ The base `_initializeError` is not a fallback. It is an assertion, and it is nev
 
 Reaching it means initialization failed and nothing in the class hierarchy, and no observer, took responsibility for the failure. The worst possible response would be to swallow the error, leaving a half-built instance in circulation with no indication that anything went wrong. So the base method rethrows asynchronously, via `isotropic-later`, in a way that is deliberately difficult to suppress: the throw does not happen inside any promise chain or `try` block belonging to the code that triggered initialization, so it cannot be accidentally caught and discarded. It surfaces as an uncaught exception, which is what an unhandled programming error should look like.
 
-If you see `Error: Initialize error` reach your process's uncaught exception handler, that is the library telling you a class with fallible initialization is missing an `_initializeError` implementation. The fix is to implement it, not to catch the rethrow.
+If you see `Error: Initialize error` reach your process's uncaught exception handler, that is "usually" the library telling you a class with fallible initialization is missing an `_initializeError` implementation. The fix is to implement it, not to catch the rethrow.
+
+### When Crashing Is The Right Answer
+
+"Usually", but not always. The base method is an assertion aimed at classes that never considered failure. It is not an accusation against a class that considered it and chose the crash.
+
+Some initialization failures mean the instance cannot do its job at all, and never will. The process was started in the wrong kind of environment, a required capability is absent, mandatory configuration is missing. There is nothing to retry, no degraded mode worth running in, and no way for the condition to change while the process lives. Continuing would leave something alive that can only pretend to work. For a class like that, an uncaught exception that is deliberately difficult to suppress is not a missing implementation. It *is* the implementation, and declining to write an `_initializeError` method is a deliberate design decision.
+
+The trouble is that the two situations look identical from the outside. Both are a class with fallible initialization and no `_initializeError` method. So say which one it is, in a comment or in the class's own documentation, or the next person to read the code may attempt to "fix" it:
+
+```javascript
+const _DragonDentist = _make('DragonDentist', _Initializable, {
+    _initialize ({
+        patient
+    }) {
+        if (patient.species === 'gryphon') {
+            // This class intentionally has no _initializeError method.
+            // A gryphon is not a dragon. There is no degraded "close enough"
+            // mode for scaling tartar off a creature that can also fly and
+            // breathe lightning. The base method's uncaught exception is the
+            // correct handling.
+            throw _Error({
+                details: {
+                    species: patient.species
+                },
+                message: `Cannot initialize DragonDentist with a non-dragon patient`
+            });
+        }
+        // ...
+    }
+});
+```
+
+Two things remain true when a class makes this choice:
+
+- **Observers can still intervene.** The failure is published as the `initializeError` event before `_initializeError` runs, so a subscriber at the `before` or `on` stage can call `prevent()` and stop it from completing. Tests commonly use this to assert that a failure happened without taking the process down with it.
+- **A subclass inherits the crash and can take it over.** There is one error channel for the entire chain, so a subclass that implements `_initializeError` is handling the base class's failures too, not just its own. If some of those still warrant a crash, the subclass's implementation should recognize the failures it knows how to handle and rethrow the rest.
 
 ### Where To Handle It
 
