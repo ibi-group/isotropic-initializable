@@ -1,4 +1,63 @@
-# Changelog
+# isotropic-initializable Changelog
+
+## 0.14.0 - 2026-08-23
+
+### Added
+
+**`untilInitialized(config)` returns a promise that settles when initialization does.** It resolves once `initializeComplete` has published and rejects if initialization fails or the instance is destroyed first.
+
+```javascript
+const document = _Document({
+    id
+});
+
+await document.untilInitialized();
+
+// Properties are populated and the instance is ready to use.
+```
+
+The call is correct whether or not initialization has already finished. An instance that initialized synchronously resolves immediately. One that is still working is awaited. This means consuming code never has to know which kind it is holding, and stays correct if a subclass later makes `_initialize` asynchronous.
+
+It is built on `until` from `isotropic-pubsub`, and accepts the same config, so `timeout`, `signal`, and the rest are available:
+
+```javascript
+await instance.untilInitialized({
+    timeout: 30000
+});
+```
+
+`eventName`, `reject`, and `subject` are supplied by the method and should not be overridden. Failure produces a `RejectError` with the message `Initialization rejected`. A timeout produces a `TimeoutError`.
+
+**An `initializing` getter** reports that initialization has begun and has not yet finished, which is the state an instance with an asynchronous `_initialize` occupies between construction and readiness.
+
+**An `initializeFailed` getter** reports that initialization ended in an error.
+
+Together with the existing `initialized`, these describe the whole lifecycle. At most one is ever `true`:
+
+| | `initialized` | `initializing` | `initializeFailed` |
+| --- | --- | --- | --- |
+| Initializing | `false` | `true` | `false` |
+| Ready | `true` | `false` | `false` |
+| Failed | `false` | `false` | `true` |
+| Destroyed | `undefined` | `undefined` | `undefined` |
+
+All three are `undefined` once the instance has been destroyed, so a destroyed instance is distinguishable from one that never got going.
+
+Both new getters are derived from retained `publishOnce` event state rather than from a separate flag, so they stay accurate for an instance inspected long after the fact.
+
+### Changed
+
+- Recommends `node ^26.7.0` / `npm ^11.19.0`.
+- `repository` now uses npm's preferred object form with explicit `type` and `url` properties rather than the `github:` shorthand. This is package metadata only.
+
+### Documentation
+
+- A new section covers awaiting initialization, including instances that are already initialized, initialization that might fail, timeouts and cancellation, destruction during initialization, and building an asynchronous factory function.
+- The initialization error handling section was expanded to explain that a class may legitimately have no `_initializeError` method. The base implementation's deliberately hard-to-suppress rethrow is the correct handling for a failure that means the instance can never do its job, and the documentation now asks that such a decision be stated in a comment, since it is otherwise indistinguishable from an oversight.
+
+### Internal
+
+- Test suite expanded from 20 to 35 tests, holding 100% statement, branch, function, and line coverage.
 
 ## 0.13.1 - 2026-07-24
 
@@ -42,8 +101,10 @@ For most consumers this is a Node version bump. Review any code that assumed `in
 
 ### Internal
 
-- Test suite migrated from Mocha to the built-in `node --test` runner; the Babel toolchain and build scripts were removed.
-- `isotropic-dev-dependencies` updated to `~0.4.0`; all Isotropic dependencies bumped to their 2026 releases.
+- Test suite migrated from Mocha to the built-in `node --test` runner.
+- The Babel toolchain and build scripts were removed.
+- `isotropic-dev-dependencies` updated to `~0.4.0`.
+- All Isotropic dependencies bumped to their latest releases.
 
 ## 0.12.0 - 2025-06-18
 
