@@ -2,19 +2,19 @@
     "author": "Steven Olmsted <steven.olmsted@ibigroup.com>",
     "bugs": "https://github.com/ibi-group/isotropic-initializable/issues",
     "dependencies": {
-        "isotropic-error": "~0.14.0",
-        "isotropic-later": "~0.15.0",
-        "isotropic-make": "~0.14.0",
-        "isotropic-mixin-prototype-chain": "~0.12.0",
-        "isotropic-pubsub": "~0.16.0"
+        "isotropic-error": "~0.14.1",
+        "isotropic-later": "~0.15.1",
+        "isotropic-make": "~0.14.1",
+        "isotropic-mixin-prototype-chain": "~0.12.1",
+        "isotropic-pubsub": "~0.17.0"
     },
     "description": "An observable initialization lifecycle",
     "devDependencies": {
-        "isotropic-dev-dependencies": "~0.4.0"
+        "isotropic-dev-dependencies": "~0.5.0"
     },
     "engines": {
-        "node": "^26.5.0",
-        "npm": "^11.17.0"
+        "node": "^26.7.0",
+        "npm": "^11.19.0"
     },
     "files": [
         "lib"
@@ -33,7 +33,10 @@
     "license": "BSD-3-Clause",
     "main": "lib/initializable.js",
     "name": "isotropic-initializable",
-    "repository": "github:ibi-group/isotropic-initializable",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ibi-group/isotropic-initializable.git"
+    },
     "scripts": {
         "lint": "eslint eslint.config.js lib test",
         "posttest": "c8 -c ./node_modules/isotropic-dev-dependencies/config/c8.json check-coverage",
@@ -43,5 +46,5 @@
         "test": "c8 -c ./node_modules/isotropic-dev-dependencies/config/c8.json node --test"
     },
     "type": "module",
-    "version": "0.13.1"
+    "version": "0.14.0"
 }
